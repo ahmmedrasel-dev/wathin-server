@@ -98,10 +98,18 @@ async function run() {
     });
 
     // Get All User Info
-    app.get('/api/users', async (req, res) => {
+    app.get('/api/users', verifyJWT, async (req, res) => {
       const query = {};
-      const user = await userCollection.findOne(query);
-      res.json(user);
+      const user = await userCollection.find(query).toArray();
+      res.send(user);
+    });
+
+    // Delete Specific User Info
+    app.delete('/api/user/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result)
     });
 
 
@@ -109,7 +117,6 @@ async function run() {
     app.post('/api/logout', (req, res) => {
       res.json({ message: 'Successfully logged out' });
     });
-
 
     // Get All News.
     app.get('/api/news', async (req, res) => {
@@ -121,6 +128,15 @@ async function run() {
       const countNews = await newsCollection.estimatedDocumentCount();
       res.send({ news, countNews });
     })
+
+    // Get Laster 5 News.
+    app.get('/api/latest-news', async (req, res) => {
+      const query = {};
+      const cursor = newsCollection.find(query);
+      const news = await cursor.limit(5).toArray();
+      res.send(news);
+    })
+
 
     // Get Spacifiz Author News.
     app.get('/api/auth-news', verifyJWT, async (req, res) => {
@@ -171,6 +187,7 @@ async function run() {
       res.send(project);
     })
 
+    // Delete Specific Project
     app.delete('/api/project/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
