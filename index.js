@@ -28,6 +28,7 @@ const userTokenGenerator = (user) => {
 
 const verifyJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  console.log(authHeader)
   if (!authHeader) {
     return res.status(401).send({ message: 'Not Allow! Unauthorization Access!' })
   }
@@ -44,12 +45,27 @@ const verifyJWT = (req, res, next) => {
 
 
 
+
+
 async function run() {
   try {
     const database = client.db('wathin');
     const newsCollection = database.collection('news');
     const userCollection = database.collection("users");
     const projectCollection = database.collection("projects");
+
+
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decode.user.email;
+      const requesterAccount = await userCollection.findOne({ email: requester });
+      if (requesterAccount.role === 'admin') {
+        next()
+      }
+      else {
+        res.status(403).send({ message: 'Forbidden Access!' })
+      }
+    }
+
 
     // Register New User.
     app.post('/api/register', async (req, res) => {
@@ -61,9 +77,10 @@ async function run() {
       }
       const hashedPassword = await bcrypt.hashSync(password, 10);
       const user = { email, password: hashedPassword, name };
-      const result = userCollection.insertOne(user);
+      const result = await userCollection.insertOne(user);
       res.send({ success: true, message: 'User Register Successfully!', token: userTokenGenerator(user) })
     });
+
 
     // Login User
     app.post('/api/login', async (req, res) => {
@@ -105,13 +122,34 @@ async function run() {
     });
 
     // Delete Specific User Info
-    app.delete('/api/user/:id', verifyJWT, async (req, res) => {
+    app.delete('/api/user/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
       res.send(result)
     });
 
+
+    app.put('/api/user/:id', verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: "admin"
+        }
+      }
+
+      const result = await userCollection.updateOne(filter, updateDoc, options)
+      res.send(result)
+    })
+
+    app.get('/api/user/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === 'admin' });
+    })
 
     // User Logout
     app.post('/api/logout', (req, res) => {
@@ -138,7 +176,7 @@ async function run() {
     })
 
 
-    // Get Spacifiz Author News.
+    // Get Spacific Author News.
     app.get('/api/auth-news', verifyJWT, async (req, res) => {
       const author = req.query.author;
       const query = { author: author };
@@ -147,7 +185,8 @@ async function run() {
       res.send(news);
     })
 
-    app.delete('/api/news/:id', verifyJWT, async (req, res) => {
+    // Delete Spacific Author News.
+    app.delete('/api/news/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const reault = await newsCollection.deleteOne(query);
@@ -156,14 +195,14 @@ async function run() {
 
 
     // Insert News.
-    app.post('/api/add-news', verifyJWT, async (req, res) => {
+    app.post('/api/add-news', verifyJWT, verifyAdmin, async (req, res) => {
       const news = req.body;
       await newsCollection.insertOne(news);
       res.send({ success: true, message: 'News Create Successfully!' })
     })
 
     // Create Project.
-    app.post('/api/create-project', verifyJWT, async (req, res) => {
+    app.post('/api/create-project', verifyJWT, verifyAdmin, async (req, res) => {
       const project = req.body;
       await projectCollection.insertOne(project);
       res.send({ success: true, message: 'News Create Successfully!' })
@@ -188,7 +227,7 @@ async function run() {
     })
 
     // Delete Specific Project
-    app.delete('/api/project/:id', verifyJWT, async (req, res) => {
+    app.delete('/api/project/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const reault = await projectCollection.deleteOne(query);
