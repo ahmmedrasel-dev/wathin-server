@@ -66,7 +66,6 @@ async function run() {
       }
     }
 
-
     // Register New User.
     app.post('/api/register', async (req, res) => {
       const { email, password, name } = req.body;
@@ -144,6 +143,7 @@ async function run() {
       res.send(result)
     })
 
+    // Check user isAdmin or Not.
     app.get('/api/user/admin/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -177,29 +177,29 @@ async function run() {
 
 
     // Get Spacific Author News.
-    app.get('/api/auth-news', verifyJWT, async (req, res) => {
+    /* app.get('/api/auth-news', verifyJWT, async (req, res) => {
       const author = req.query.author;
       const query = { author: author };
       const cursor = newsCollection.find(query);
       const news = await cursor.toArray();
       res.send(news);
     })
-
+ */
     // Delete Spacific Author News.
-    app.delete('/api/news/:id', verifyJWT, verifyAdmin, async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const reault = await newsCollection.deleteOne(query);
-      res.send(reault)
-    })
+    /*  app.delete('/api/news/:id', verifyJWT, verifyAdmin, async (req, res) => {
+       const id = req.params.id;
+       const query = { _id: new ObjectId(id) };
+       const reault = await newsCollection.deleteOne(query);
+       res.send(reault)
+     }) */
 
 
     // Insert News.
-    app.post('/api/add-news', verifyJWT, verifyAdmin, async (req, res) => {
-      const news = req.body;
-      await newsCollection.insertOne(news);
-      res.send({ success: true, message: 'News Create Successfully!' })
-    })
+    /*  app.post('/api/add-news', verifyJWT, verifyAdmin, async (req, res) => {
+       const news = req.body;
+       await newsCollection.insertOne(news);
+       res.send({ success: true, message: 'News Create Successfully!' })
+     }) */
 
     // Create Project.
     app.post('/api/create-project', verifyJWT, verifyAdmin, async (req, res) => {
@@ -216,16 +216,6 @@ async function run() {
       res.send(project);
     })
 
-
-    // Get Spacifiz Author News.
-    app.get('/api/auth-project', verifyJWT, async (req, res) => {
-      const author = req.query.author;
-      const query = { author: author };
-      const cursor = projectCollection.find(query);
-      const project = await cursor.toArray();
-      res.send(project);
-    })
-
     // Delete Specific Project
     app.delete('/api/project/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
@@ -236,13 +226,13 @@ async function run() {
 
 
     // Get Single New.
-    app.get('/api/news/:slug', async (req, res) => {
-      const slug = req.params.slug;
-      const query = { slug: slug };
-
-      const news = await newsCollection.findOne(query);
-      res.send(news);
-    })
+    /*  app.get('/api/news/:slug', async (req, res) => {
+       const slug = req.params.slug;
+       const query = { slug: slug };
+ 
+       const news = await newsCollection.findOne(query);
+       res.send(news);
+     }) */
   }
   finally {
 
