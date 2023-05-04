@@ -25,7 +25,6 @@ const userTokenGenerator = (user) => {
   return jwt.sign({ user }, process.env.ACCESS_TOKEN, { expiresIn: '30d' })
 }
 
-
 const verifyJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
   console.log(authHeader)
@@ -214,6 +213,28 @@ async function run() {
       const cursor = projectCollection.find(query);
       const project = await cursor.toArray();
       res.send(project);
+    })
+
+
+    // Get Single Project.
+    app.get('/api/project/:slug', async (req, res) => {
+      const slug = req.params.slug;
+      const query = { slug: slug };
+      const project = await projectCollection.findOne(query);
+      res.send(project);
+    })
+
+    app.put('/api/update-project/:slug', verifyJWT, async (req, res) => {
+      const slug = req.params.slug;
+      const filter = { slug: slug };
+      const projectData = req.body;
+      console.log(projectData);
+      const option = { upsert: true };
+      const update_project_data = {
+        $set: projectData,
+      }
+      const result = await projectCollection.updateOne(filter, update_project_data, option);
+      res.send(result);
     })
 
     // Delete Specific Project
